@@ -27,28 +27,32 @@ jobs:
       #     npm run build 
       # --- END: OPTIONAL SSG BUILD BLOCK ---
 
-      - name: Deploy Static Files to EC2
+      - name: Deploy Files to Staging (Home Directory)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          # Uses the SSH key generated specifically for this deployment
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Source: This is the folder containing your final HTML/CSS/JS.
-          # Change './' to the build folder if you uncommented the SSG block above (e.g., './dist/')
-          source: "./"
-          # Target: The location Nginx serves files from
-          target: /var/www/portfolio/
-          args: "-r" # Recursive copy (-r) and skip interactive prompts (-i)
-          sudo: true
+          source: "./" # Your source files
+          target: "~/portfolio_staging/" # A temporary folder in the user's home directory
+          args: "-r"
 
-      - name: Reload Nginx on EC2
+      - name: Move Files to Nginx Directory and Reload
         uses: appleboy/ssh-action@v1.0.1
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Command to ensure Nginx serves the new files immediately
           script: |
+            # 1. DELETE the old files in the Nginx folder with sudo
+            sudo rm -rf /var/www/portfolio/*
+            
+            # 2. MOVE the new files from the staging area to the Nginx folder with sudo
+            sudo mv ~/portfolio_staging/* /var/www/portfolio/
+            
+            # 3. CLEAN UP the staging area
+            rm -rf ~/portfolio_staging/
+            
+            # 4. Reload Nginx
             sudo systemctl reload nginx
-            echo "Nginx reloaded successfully!"
+            echo "Deployment successful and Nginx reloaded!"
