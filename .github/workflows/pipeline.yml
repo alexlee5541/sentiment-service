@@ -32,14 +32,12 @@ jobs:
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
-          # Uses the SSH key generated specifically for this deployment
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Source: This is the folder containing your final HTML/CSS/JS.
-          # Change './' to the build folder if you uncommented the SSG block above (e.g., './dist/')
-          source: "./"
-          # Target: The location Nginx serves files from
+          source: "./" # Or your build folder
           target: /var/www/portfolio/
-          args: "-r" # Recursive copy (-r) and skip interactive prompts (-i)
+          args: "-r"
+          # --- ADD THIS LINE ---
+          sudo: true # <--- This forces the transfer and directory cleanup with sudo # Recursive copy (-r) and skip interactive prompts (-i)
 
       - name: Reload Nginx on EC2
         uses: appleboy/ssh-action@v1.0.1
