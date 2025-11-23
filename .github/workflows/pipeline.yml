@@ -1,66 +1,53 @@
-name: Production Pipeline
+name: Deploy Portfolio
 
-# Trigger: Run on every push to the main branch
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches:
+      - main # Trigger deployment every time a commit is pushed to the 'main' branch
 
 jobs:
-  # Job 1: Health Check (The "Quality Gate")
-  test:
+  deploy:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      # --- START: OPTIONAL STATIC SITE GENERATOR (SSG) BUILD BLOCK ---
+      # UNCOMMENT the lines below ONLY IF you used an SSG (like Astro, Next.js, or Hugo).
+      # If your portfolio is just raw HTML/CSS, skip this block.
+      
+      # - name: Setup Node.js Environment
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '20'
+      # - name: Install and Build SSG
+      #   run: |
+      #     npm install
+      #     npm run build 
+      # --- END: OPTIONAL SSG BUILD BLOCK ---
+
+      - name: Deploy Static Files to EC2
+        uses: appleboy/scp-action@v0.1.7
         with:
-          python-version: '3.9'
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          # Uses the SSH key generated specifically for this deployment
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Source: This is the folder containing your final HTML/CSS/JS.
+          # Change './' to the build folder if you uncommented the SSG block above (e.g., './dist/')
+          source: "./"
+          # Target: The location Nginx serves files from
+          target: /var/www/portfolio/
+          args: "-r -i" # Recursive copy (-r) and skip interactive prompts (-i)
 
-      - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip
-          # Install ONLY what we need for testing (no heavy AI models yet)
-          pip install pytest "httpx<0.28"
-          # We install the app dependencies but ignore the heavy torch/model for the *test* phase if possible
-          # For this simple project, we'll just install everything to keep it simple.
-          pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
-
-      - name: Run Unit Tests
-        # Tech Lead Note: We haven't written tests yet, so this will pass if 0 tests are found.
-        # In a real job, I would block the merge if this step fails.
-        run: pytest
-
-  # Job 2: Build & Push (The "Delivery")
-  build-and-push:
-    needs: test # Only run if 'test' passes
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
+      - name: Reload Nginx on EC2
+        uses: appleboy/ssh-action@v1.0.1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Set up Docker Buildx
-        # This enables advanced caching features
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build and Push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          # Tags the image with 'latest' AND the short git commit hash (e.g., :a1b2c3d)
-          # This is crucial for rollbacks.
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/sentiment-app:latest
-            ${{ secrets.DOCKER_USERNAME }}/sentiment-app:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Command to ensure Nginx serves the new files immediately
+          script: |
+            sudo systemctl reload nginx
+            echo "Nginx reloaded successfully!"
