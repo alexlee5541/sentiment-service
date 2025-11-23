@@ -39,7 +39,7 @@ jobs:
           source: "./"
           # Target: The location Nginx serves files from
           target: /var/www/portfolio/
-          args: "-r -i" # Recursive copy (-r) and skip interactive prompts (-i)
+          args: "-r" # Recursive copy (-r) and skip interactive prompts (-i)
 
       - name: Reload Nginx on EC2
         uses: appleboy/ssh-action@v1.0.1
