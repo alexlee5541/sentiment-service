@@ -39,4 +39,9 @@ spec:
               name: pg-data
       volumes:
         - name: pg-data
-          emptyDir: {} # WARNING: Data is lost on restart. For Prod, we need PVCs.
+          emptyDir: {} # WARN
+          resources:
+          requests:
+            memory: "150Mi" # 150MB request
+          limits:
+            memory: "250Mi" # 250MB hard limitING: Data is lost on restart. For Prod, we need PVCs.

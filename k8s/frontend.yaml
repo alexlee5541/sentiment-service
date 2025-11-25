@@ -30,3 +30,8 @@ spec:
           env:
             - name: API_URL
               value: "http://backend-service:8000"
+              resources:
+          requests:
+            memory: "150Mi" # 150MB request
+          limits:
+            memory: "250Mi" # 250MB hard limit

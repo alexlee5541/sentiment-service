@@ -34,5 +34,9 @@ spec:
               value: "YOUR_ACTUAL_API_KEY_HERE" # In Prod, we use K8s Secrets
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+            # WE CUT THIS FROM 512Mi (512MB) to 300Mi to save space
+            memory: "300Mi" 
+            cpu: "250m"
+          limits:
+            # We also enforce a hard limit to prevent OOMKill system-wide
+            memory: "500Mi"
