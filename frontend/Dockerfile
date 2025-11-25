@@ -10,4 +10,4 @@ COPY . .
 # Streamlit runs on 8501 by default
 EXPOSE 8501
 
-CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0"]
+CMD ["python3", "-m", "streamlit", "run", "app.py", "--server.port", "8501", "--server.enableCORS", "true", "--server.address", "0.0.0.0"]
