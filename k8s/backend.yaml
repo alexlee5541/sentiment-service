@@ -36,7 +36,7 @@ spec:
           resources:
             requests:
               # We expect 300MB to be enough for the AI model loading
-              memory: "700Mi" 
+              memory: "500Mi" 
               cpu: "250m"
             limits:
               # Hard limit to prevent it from consuming all 4GB of RAM
