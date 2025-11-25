@@ -26,12 +26,13 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: alexlee5541/sentiment-frontend:v1 # <--- UPDATE THIS
+          image: alexlee5541/sentiment-frontend:v1 # Your Docker Hub Image
           env:
             - name: API_URL
               value: "http://backend-service:8000"
-              resources:
-          requests:
-            memory: "150Mi" # 150MB request
-          limits:
-            memory: "250Mi" # 250MB hard limit
+          # Resources are CORRECTLY placed here, under the container
+          resources:
+            requests:
+              memory: "150Mi" # Request 150MB
+            limits:
+              memory: "250Mi" # Hard limit at 250MB

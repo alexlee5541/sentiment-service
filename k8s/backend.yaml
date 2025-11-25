@@ -26,17 +26,18 @@ spec:
     spec:
       containers:
         - name: backend
-          image: alexlee5541/sentiment-backend:v1 # <--- UPDATE THIS
+          image: alexlee5541/sentiment-backend:v1 # Your Docker Hub Image
           env:
             - name: DATABASE_URL
               value: "postgresql://user:password@db-service:5432/sentiment_db"
             - name: FINNHUB_API_KEY
-              value: "YOUR_ACTUAL_API_KEY_HERE" # In Prod, we use K8s Secrets
+              value: "YOUR_ACTUAL_API_KEY_HERE"
+          # Resources are CORRECTLY placed here, under the container
           resources:
             requests:
-            # WE CUT THIS FROM 512Mi (512MB) to 300Mi to save space
-            memory: "300Mi" 
-            cpu: "250m"
-          limits:
-            # We also enforce a hard limit to prevent OOMKill system-wide
-            memory: "500Mi"
+              # We expect 300MB to be enough for the AI model loading
+              memory: "300Mi" 
+              cpu: "250m"
+            limits:
+              # Hard limit to prevent it from consuming all 4GB of RAM
+              memory: "500Mi"
