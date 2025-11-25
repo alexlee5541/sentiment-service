@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sentiment-ingress
+  annotations:
+    # Telling Traefik to use the host header for routing
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  rules:
+  - host: sentiment.alex-builds.com # <--- REPLACE WITH YOUR SUBDOMAIN
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service # Connects to the Streamlit Service
+            port:
+              number: 8501
