@@ -29,15 +29,15 @@ spec:
           image: alexlee5541/sentiment-backend:v2 # Your Docker Hub Image
           env:
             - name: DATABASE_URL
-              value: "postgresql://user:password@db-service:5432/sentiment_db"
+              # CHANGE THE HOSTNAME: Ensure this matches the actual Service name for Postgres
+              value: "postgresql://user:password@postgres-service:5432/sentiment_db" 
             - name: FINNHUB_API_KEY
-              value: "YOUR_ACTUAL_API_KEY_HERE"
           # Resources are CORRECTLY placed here, under the container
           resources:
             requests:
-              # We expect 300MB to be enough for the AI model loading
-              memory: "500Mi" 
-              cpu: "250m"
+              # Request enough memory to minimize startup swapping
+              memory: "1024Mi" # Increased request to 1GB
+              cpu: "500m"
             limits:
-              # Hard limit to prevent it from consuming all 4GB of RAM
-              memory: "500Mi"
+              # Set a high hard limit to allow the AI model to load
+              memory: "2048Mi"
