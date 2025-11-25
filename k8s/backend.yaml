@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: youruser/sentiment-backend:v1 # <--- UPDATE THIS
+          image: alexlee5541/sentiment-backend:v1 # <--- UPDATE THIS
           env:
             - name: DATABASE_URL
               value: "postgresql://user:password@db-service:5432/sentiment_db"

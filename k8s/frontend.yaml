@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: youruser/sentiment-frontend:v1 # <--- UPDATE THIS
+          image: alexlee5541/sentiment-frontend:v1 # <--- UPDATE THIS
           env:
             - name: API_URL
               value: "http://backend-service:8000"
