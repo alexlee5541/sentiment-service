@@ -3,17 +3,29 @@ kind: Ingress
 metadata:
   name: sentiment-ingress
   annotations:
-    # Telling Traefik to use the host header for routing
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-  - host: sentiment.alex-builds.com # <--- REPLACE WITH YOUR SUBDOMAIN
+  # Rule 1: The sentiment app subdomain
+  - host: sentiment.alex-builds.com 
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: frontend-service # Connects to the Streamlit Service
+            name: frontend-service 
+            port:
+              number: 8501
+  
+  # Rule 2: The root portfolio site
+  - host: www.alex-builds.com # <-- CRITICAL RULE FOR THE 404 FIX
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service # Route to the same frontend service
             port:
               number: 8501
