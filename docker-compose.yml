@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # Service 1: The Database
   db:
     image: postgres:15-alpine
     volumes:
@@ -18,32 +17,24 @@ services:
       timeout: 5s
       retries: 5
 
-  # Service 2: Your FastAPI App
   web:
-    build: .
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    build: ./backend # <--- Pointing to new folder
     ports:
       - "8000:8000"
     environment:
-      # Connection string to talk to the 'db' service
       - DATABASE_URL=postgresql://user:password@db:5432/sentiment_db
-      # Pass your API key through to the container
       - FIN_NEWS_API_KEY=${FIN_NEWS_API_KEY}
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      # Sync code for live reloading (Development only)
-      - .:/app
-
-      # ... existing db and web services ...
+      - ./backend:/app # Sync code for dev
 
   frontend:
-    build: ./frontend
+    build: ./frontend # <--- Pointing to new folder
     ports:
       - "8501:8501"
     environment:
-      # This tells Streamlit to talk to the 'web' container on port 8000
       - API_URL=http://web:8000
     depends_on:
       - web

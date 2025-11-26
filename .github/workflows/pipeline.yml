@@ -33,7 +33,7 @@ jobs:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "./" # Your source files
+          source: "./portfolio/" # <--- UPDATE THIS # Your source files
           target: "~/portfolio_staging/" # A temporary folder in the user's home directory
           args: "-r"
 
@@ -44,15 +44,16 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # 1. DELETE the old files in the Nginx folder with sudo
+            # Cleanup destination
             sudo rm -rf /var/www/portfolio/*
             
-            # 2. MOVE the new files from the staging area to the Nginx folder with sudo
-            sudo mv ~/portfolio_staging/* /var/www/portfolio/
+            # Move files. 
+            # Note: SCP likely created ~/portfolio_staging/portfolio/index.html
+            # So we move contents of that inner folder.
+            sudo mv ~/portfolio_staging/portfolio/* /var/www/portfolio/
             
-            # 3. CLEAN UP the staging area
+            # Cleanup staging
             rm -rf ~/portfolio_staging/
             
-            # 4. Reload Nginx
+            # Reload
             sudo systemctl reload nginx
-            echo "Deployment successful and Nginx reloaded!"
