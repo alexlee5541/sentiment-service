@@ -6,8 +6,8 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web
 spec:
   rules:
-  # Rule 1: The sentiment app subdomain
-  - host: sentiment.alex-builds.com 
+  # Rule 1: The sentiment app subdomain. This is the ONLY rule for the K3s cluster.
+  - host: sentiment.alex-builds.com
     http:
       paths:
       - path: /
@@ -15,17 +15,5 @@ spec:
         backend:
           service:
             name: frontend-service 
-            port:
-              number: 8501
-  
-  # Rule 2: The root portfolio site
-  - host: www.alex-builds.com # <-- CRITICAL RULE FOR THE 404 FIX
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: frontend-service # Route to the same frontend service
             port:
               number: 8501
