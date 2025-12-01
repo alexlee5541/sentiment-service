@@ -26,12 +26,16 @@ spec:
     spec:
       containers:
         - name: backend
-          image: alexlee5541/sentiment-backend:v6 # Your Docker Hub Image
+          # Ensure this is the tag containing the fixed services.py (v7 or latest)
+          image: alexlee5541/sentiment-backend:v8
           env:
             - name: DATABASE_URL
-              # CHANGE THE HOSTNAME: Ensure this matches the actual Service name for Postgres
-              value: "postgresql://user:password@postgres-service:5432/sentiment_db" 
-            - name: FINNHUB_API_KEY
+              # FIX 1: The hostname MUST match the service name defined in database.yaml ('db-service')
+              value: "postgresql://user:password@db-service:5432/sentiment_db" 
+            - name: API_KEY
+              # FIX 2: The environment variable name MUST be "API_KEY" to match os.getenv("API_KEY") in main.py
+              # Since you are using hardcoded 'env', you must put your actual key here (NOT RECOMMENDED, but fixes the issue):
+              value: "ofcsRnM0E5Y9IAtondELhM9xGxskcHTB" 
           # Resources are CORRECTLY placed here, under the container
           resources:
             requests:
