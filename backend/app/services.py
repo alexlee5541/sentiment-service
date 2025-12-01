@@ -19,8 +19,8 @@ def get_all_news(api_key: str, limit: int = 20):
     """
     sources = {
         "FMP Stable": "https://financialmodelingprep.com/stable/fmp-articles",
-        "FMP General": "https://financialmodelingprep.com/stable/news/general-latest",
-        "FMP Stock": "https://financialmodelingprep.com/stable/news/stock-latest",
+        # "FMP General": "https://financialmodelingprep.com/stable/news/general-latest",
+        # "FMP Stock": "https://financialmodelingprep.com/stable/news/stock-latest",
     }
 
     aggregated_news = []

@@ -8,10 +8,10 @@ from sqlalchemy import desc
 
 # Relative imports
 from .database import SessionLocal, SentimentRecord, init_db
-from .services import get_all_news
+from .services import get_all_news # This function likely needs a ticker
 
 load_dotenv()
-API_KEY = os.getenv("FIN_NEWS_API_KEY")
+# API_KEY is now injected via Kubernetes Secret
 
 sentiment_pipeline = None
 
@@ -41,21 +41,32 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# --- FIX START: Add ticker: str argument ---
 @app.get("/sentiment")
-async def get_stock_sentiment(db: Session = Depends(get_db)):
+async def get_stock_sentiment(ticker: str, db: Session = Depends(get_db)):
+# --- FIX END ---
+    
+    # We now retrieve the API_KEY from the environment, which is provided by the K8s Secret
+    API_KEY = os.getenv("API_KEY")
+
     if not sentiment_pipeline:
         raise HTTPException(status_code=503, detail="AI Model is loading...")
     
     if not API_KEY:
+        # This check is good, but the key should now be present from the Secret
         raise HTTPException(status_code=500, detail="API Key missing")
 
-    # 1. Fetch Data (Using the new service layer)
-    all_news = get_all_news(API_KEY, limit=20)
+    # 1. Fetch Data (Pass the ticker to the service layer)
+    # --- FIX START: Pass the Ticker ---
+    all_news = get_all_news(API_KEY, ticker=ticker, limit=20) 
+    # --- FIX END ---
     
     analyzed_news = []
     bullish_count = 0
     bearish_count = 0
-
+    
+    # ... rest of the function remains the same ...
+    
     # 2. Process
     for item in all_news:
         headline = item.get("title", "")
@@ -71,6 +82,8 @@ async def get_stock_sentiment(db: Session = Depends(get_db)):
 
         # 3. Save
         db_record = SentimentRecord(
+            # Save the ticker symbol with the record
+            ticker=ticker,
             source=item.get('source_label', 'Unknown'),
             headline=headline[:200],
             sentiment=label,
