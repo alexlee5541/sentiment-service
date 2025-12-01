@@ -9,7 +9,7 @@ from sqlalchemy import desc
 
 # Relative imports
 from .database import SessionLocal, SentimentRecord, init_db
-from .services import get_stock_news  # ← Updated import
+from .services import get_all_news
 
 load_dotenv()
 
@@ -57,7 +57,7 @@ async def get_stock_sentiment(ticker: str, db: Session = Depends(get_db)):
     ticker = ticker.strip().upper()
 
     # Fetch news for the specific ticker
-    all_news = get_stock_news(ticker=ticker, api_key=API_KEY, limit=50)
+    all_news = get_all_news(ticker=ticker, api_key=API_KEY, limit=20)
 
     if not all_news:
         raise HTTPException(status_code=404, detail=f"No news found for {ticker}")

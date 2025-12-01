@@ -27,7 +27,7 @@ spec:
       containers:
         - name: backend
           # Ensure this is the tag containing the fixed services.py (v7 or latest)
-          image: alexlee5541/sentiment-backend:v11
+          image: alexlee5541/sentiment-backend:v12
           env:
             - name: DATABASE_URL
               # FIX 1: The hostname MUST match the service name defined in database.yaml ('db-service')

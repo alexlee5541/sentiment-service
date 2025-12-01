@@ -53,7 +53,7 @@ def fetch_fmp_articles(
 
 def get_all_news(
     ticker: Optional[str] = None,
-    limit: int = 20,
+    limit: int =20,
     page: int = 0
 ) -> List[Dict]:
     """
