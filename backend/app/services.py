@@ -1,52 +1,54 @@
 import requests
 
-def fetch_fmp_data(url: str, api_key: str, params: dict, limit: int = 20):
+def fetch_fmp_data(url: str, api_key: str, page: int = 0, limit: int = 20, extra_params: dict | None = None):
     """
-    Generic helper to fetch data from FMP endpoints.
-    Combines static and dynamic parameters.
+    Generic helper to fetch data from the new FMP /fmp-articles endpoint.
+    The new endpoint expects ?page=...&limit=...&apikey=... directly in the query string.
     """
-    # Combine user-defined params with global settings
-    final_params = {"limit": limit, "apikey": api_key}
-    final_params.update(params)
+    params = {
+        "page": page,
+        "limit": limit,
+        "apikey": api_key,
+    }
+    
+    if extra_params:
+        params.update(extra_params)
 
     try:
-        # Increase timeout to 10 seconds for external API calls
-        response = requests.get(url, params=final_params, timeout=10)
-        # Will raise HTTPError for 4xx or 5xx status codes
-        response.raise_for_status() 
+        response = requests.get(url, params=params, timeout=15)
+        response.raise_for_status()
         return response.json()
-    except Exception as e:
-        # We print the error but return an empty list so the FastAPI loop doesn't crash
-        print(f"Error fetching from {url} with params {final_params}: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching from {url} (page={page}, limit={limit}): {e}")
         return []
 
-# FIX: Ticker argument is still needed for the main.py function signature,
-# but we will ignore it here and only fetch general news.
-def get_all_news(api_key: str, ticker: str, limit: int = 20):
+
+def get_all_news(api_key: str, ticker: str = "", limit: int = 20, page: int = 0):
     """
-    Fetches news using only the general FMP Stable endpoint, as requested.
-    The 'ticker' argument is ignored in this implementation.
+    Fetches general market news from the new FMP Stable endpoint:
+    https://financialmodelingprep.com/stable/fmp-articles?page=X&limit=Y&apikey=KEY
+    
+    The `ticker` parameter is kept for backward compatibility with your FastAPI routes
+    but is ignored (as the endpoint returns only general news).
     """
     aggregated_news = []
-    
-    # 1. Fetch General Market News (Only use this endpoint)
-    general_url = "https://financialmodelingprep.com/api/v3/fmp-articles"
-    
-    # We fetch the full limit of news since this is the only source
-    general_items = fetch_fmp_data(
+
+    # New official endpoint
+    general_url = "https://financialmodelingprep.com/stable/fmp-articles"
+
+    news_items = fetch_fmp_data(
         url=general_url,
         api_key=api_key,
-        params={},
-        limit=limit 
+        page=page,
+        limit=limit
     )
-    
-    for item in general_items:
-        item['source_label'] = "FMP Stable Market News"
-        if item.get('title'):
-            aggregated_news.append(item)
-            
-    # CRITICAL CHANGE: The FastAPI logic is still designed for a ticker,
-    # but since we are only getting general news, every analysis performed
-    # will be based on the general market conditions, not specific to the ticker.
-    
+
+    # FMP still returns a list of articles even on error sometimes → safeguard
+    if isinstance(news_items, list):
+        for item in news_items:
+            item = item.copy()  # avoid mutating original if cached somewhere
+            item['source_label'] = "FMP Stable Market News"
+            if item.get('title'):  # only add valid articles
+                aggregated_news.append(item)
+
     return aggregated_news
