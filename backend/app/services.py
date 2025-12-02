@@ -1,23 +1,17 @@
-# services.py
 import os
 import requests
 from typing import List, Dict, Optional
 
-def fetch_fmp_articles(
-    api_key: str,
-    page: int = 0,
-    limit: int = 50
-) -> List[Dict]:
+def fetch_fmp_articles(api_key: str, page: int = 0, limit: int = 50) -> List[Dict]:
     """
-    Calls YOUR confirmed working endpoint:
-    https://financialmodelingprep.com/stable/fmp-articles?page=0&limit=50&apikey=XXX
+    Calls the FMP Stable endpoint.
     """
     url = "https://financialmodelingprep.com/stable/fmp-articles"
     
     params = {
         "page": page,
         "limit": limit,
-        "apikey": api_key   # ← directly from env var (injected by your backend.yaml)
+        "apikey": api_key
     }
 
     try:
@@ -30,15 +24,13 @@ def fetch_fmp_articles(
         response.raise_for_status()
         data = response.json()
 
-        # FMP sometimes returns {"content": [...]} or direct list
+        # Normalize response structure
         articles = data.get("content", data) if isinstance(data, dict) else data
         if not isinstance(articles, list):
             articles = []
 
-        # Normalize fields + add source label
         for item in articles:
             item["source_label"] = "FMP Articles"
-            # Some responses use 'title', some 'headline' — unify
             if "title" in item and "headline" not in item:
                 item["headline"] = item["title"]
 
@@ -46,34 +38,28 @@ def fetch_fmp_articles(
 
     except Exception as e:
         print(f"[FMP] Request failed: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"[FMP] Response: {e.response.text}")
         return []
 
-
-def get_all_news(
-    ticker: Optional[str] = None,
-    limit: int =20,
-    page: int = 0
-) -> List[Dict]:
+def get_all_news(ticker: Optional[str] = None, limit: int = 20, page: int = 0) -> List[Dict]:
     """
-    Main function used by main.py
-    Automatically reads API_KEY from environment (set by your backend.yaml)
+    Main function used by main.py.
+    Reads API_KEY from environment variable.
     """
+    # Retrieve API_KEY from environment (injected by K8s Secret)
     api_key = os.getenv("API_KEY")
     if not api_key:
-        raise ValueError("API_KEY environment variable is missing!")
+        print("Error: API_KEY not found in environment variables.")
+        return []
 
     articles = fetch_fmp_articles(api_key=api_key, page=page, limit=limit)
 
-    # Optional: filter by ticker (client-side)
+    # Client-side filtering for the specific ticker
     if ticker:
         ticker_upper = ticker.upper()
         filtered = [
             a for a in articles
-            if ticker_upper in (a.get("headline", "") + a.get("title", "") + a.get("text", "")).upper()
+            if ticker_upper in (a.get("headline", "") + a.get("title", "") + a.get("content", "")).upper()
         ]
-        print(f"[FMP] {len(filtered)}/{len(articles)} articles mention {ticker}")
         return filtered
 
     return articles
