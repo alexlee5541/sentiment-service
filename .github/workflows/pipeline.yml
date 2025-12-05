@@ -1,59 +1,107 @@
-name: Deploy Portfolio
+name: Production Pipeline
 
 on:
   push:
-    branches:
-      - main # Trigger deployment every time a commit is pushed to the 'main' branch
+    branches: ["main"]
 
 jobs:
-  deploy:
+  # JOB 1: SECURITY & QUALITY CHECKS
+  security-check:
     runs-on: ubuntu-latest
-    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy Vulnerability Scanner (fs mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          hide-progress: false
+          format: 'table'
+          exit-code: '0' # Don't fail build yet, just report
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  # JOB 2: DEPLOY STATIC PORTFOLIO (Nginx)
+  deploy-portfolio:
+    needs: security-check
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- START: OPTIONAL STATIC SITE GENERATOR (SSG) BUILD BLOCK ---
-      # UNCOMMENT the lines below ONLY IF you used an SSG (like Astro, Next.js, or Hugo).
-      # If your portfolio is just raw HTML/CSS, skip this block.
-      
-      # - name: Setup Node.js Environment
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20'
-      # - name: Install and Build SSG
-      #   run: |
-      #     npm install
-      #     npm run build 
-      # --- END: OPTIONAL SSG BUILD BLOCK ---
-
-      - name: Deploy Files to Staging (Home Directory)
+      - name: Deploy Files to Staging
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "./portfolio/" # <--- UPDATE THIS # Your source files
-          target: "~/portfolio_staging/" # A temporary folder in the user's home directory
+          source: "./portfolio/"
+          target: "~/portfolio_staging/"
           args: "-r"
 
-      - name: Move Files to Nginx Directory and Reload
+      - name: Move & Reload Nginx
         uses: appleboy/ssh-action@v1.0.1
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Cleanup destination
             sudo rm -rf /var/www/portfolio/*
-            
-            # Move files. 
-            # Note: SCP likely created ~/portfolio_staging/portfolio/index.html
-            # So we move contents of that inner folder.
             sudo mv ~/portfolio_staging/portfolio/* /var/www/portfolio/
-            
-            # Cleanup staging
             rm -rf ~/portfolio_staging/
-            
-            # Reload
+            sudo chown -R www-data:www-data /var/www/portfolio
             sudo systemctl reload nginx
+
+  # JOB 3: BUILD & DEPLOY APP (Kubernetes)
+  # Only runs if backend/frontend files change
+  deploy-app:
+    needs: security-check
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.modified, 'frontend/')
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      # Build Backend (Only if backend changed? For simplicity we build both)
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./backend
+          push: true
+          tags: alexlee5541/sentiment-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64 # Critical for AWS EC2
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v4
+        with:
+          context: ./frontend
+          push: true
+          tags: alexlee5541/sentiment-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Trigger K3s Rollout
+        uses: appleboy/ssh-action@v1.0.1
+        with:
+          host: ${{ secrets.REMOTE_HOST }}
+          username: ${{ secrets.REMOTE_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Force K3s to pull the 'latest' tag by restarting deployments
+            sudo kubectl rollout restart deployment backend-deployment
+            sudo kubectl rollout restart deployment frontend-deployment
+            echo "🚀 K3s Rolling Update Triggered!"

@@ -3,71 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alex: AI & Cloud Systems Architect</title>
+    <title>Alex | AI & DevOps Architect</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/svg+xml" href="/alicorn-duotone-thin-full.svg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <header>
         <div class="container">
             <h1>Alex | Software Engineer</h1>
-            <p>AI/ML Engineer & Secure Cloud Systems Architect</p>
+            <p>Specializing in <strong>AI Infrastructure, Kubernetes, and Zero-Trust Security</strong>.</p>
         </div>
     </header>
 
     <div class="hero">
         <div class="container">
-            <h2>Building Production-Ready, Secure Applications</h2>
-            <p>I specialize in building, deploying, and securing full-stack, data-driven applications—from the containerized model (FastAPI) to the **zero-trust cloud infrastructure** (Cloudflare Tunnel & AWS).</p>
-            <a href="https://sentiment.alex-builds.com" class="cta-button">View Live Sentiment Analyzer Project 🚀</a>
+            <h2>Engineering Real-Time Financial Intelligence</h2>
+            <p>I build secure, scalable platforms that bridge the gap between <strong>Financial Data</strong> and <strong>AI Analysis</strong>. Currently operating a production-grade Kubernetes cluster in Jakarta.</p>
+            <a href="https://sentiment.alex-builds.com" class="cta-button"><i class="fas fa-rocket"></i> Launch Sentiment AI</a>
         </div>
     </div>
 
-    <section id="project" class="section container">
-        <h2>Featured Project: Real-Time Sentiment Analyzer</h2>
-        <div class="card">
-            <h3>Infrastructure & Security (DevOps Showcase)</h3>
-            <p>This project runs on a **Ghost Mode zero-trust architecture** on AWS EC2, eliminating all external attack surfaces. The Nginx, Streamlit, and PostgreSQL services are all containerized using Docker Compose.</p>
+    <section id="architecture" class="section container">
+        <h2>The Architecture Evolution</h2>
+        <p style="text-align:center; max-width: 800px; margin: 0 auto;">A journey from a local script to a distributed cloud system.</p>
+        
+        <div class="grid" style="margin-top: 40px;">
+            <!-- Phase 1 -->
+            <div class="card">
+                <h3><i class="fas fa-laptop-code"></i> Phase 1: The Prototype</h3>
+                <p class="tag">Completed</p>
+                <p>Started as a local Python script using <strong>FastAPI</strong> and <strong>HuggingFace</strong> (FinBERT). Manual execution and local SQLite storage.</p>
+                <ul>
+                    <li>Single-threaded Python</li>
+                    <li>Local processing</li>
+                    <li>No isolation</li>
+                </ul>
+            </div>
 
-            <div class="grid" style="margin-top: 20px;">
-                <div class="card" style="flex: 1 1 45%; box-shadow: none;">
-                    <h4>DevOps & Networking</h4>
+            <!-- Phase 2 -->
+            <div class="card">
+                <h3><i class="fab fa-docker"></i> Phase 2: Containerization</h3>
+                <p class="tag">Completed</p>
+                <p>Dockerized the application stack. Split services into <strong>Microservices</strong> (Frontend, Backend, DB) using Docker Compose.</p>
+                <ul>
+                    <li>Docker Multi-stage builds</li>
+                    <li>PostgreSQL persistence</li>
+                    <li>Network isolation</li>
+                </ul>
+            </div>
+
+            <!-- Phase 3 (Current) -->
+            <div class="card" style="border: 2px solid #3498db;">
+                <h3><i class="fas fa-network-wired"></i> Phase 3: Kubernetes & Zero-Trust</h3>
+                <p class="tag active">Live Production</p>
+                <p>Migrated to <strong>AWS EC2 (Jakarta)</strong> running <strong>K3s</strong>. Implemented <strong>Cloudflare Tunnel</strong> for "Ghost Mode" security (No open ports).</p>
+                <ul>
+                    <li><strong>Orchestration:</strong> Kubernetes (K3s)</li>
+                    <li><strong>Security:</strong> Zero Inbound Ports</li>
+                    <li><strong>CI/CD:</strong> GitHub Actions Automated Pipeline</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="roadmap" class="section container">
+        <h2>🚀 Future Roadmap (Phase 4)</h2>
+        <div class="card" style="text-align: left;">
+            <h3>Multi-Cloud & Infrastructure as Code (IaC)</h3>
+            <p>The next iteration of this platform will focus on <strong>High Availability</strong> and <strong>RAG (Retrieval-Augmented Generation)</strong>.</p>
+            <div class="grid">
+                <div>
+                    <h4>Infrastructure</h4>
                     <ul>
-                        <li>**Zero-Trust Ingress:** Cloudflare Tunnel (Ports 80/443 on AWS are closed)</li>
-                        <li>**Routing:** Nginx routes root traffic to static files and subdomain traffic to Streamlit (Port 8501).</li>
-                        <li>**Deployment:** Automated CI/CD via GitHub Actions and SSH.</li>
+                        <li><strong>Terraform:</strong> To provision infrastructure across AWS and GCP.</li>
+                        <li><strong>GCP:</strong> Hosting a secondary failover site.</li>
                     </ul>
                 </div>
-                <div class="card" style="flex: 1 1 45%; box-shadow: none;">
-                    <h4>Application Stack</h4>
+                <div>
+                    <h4>AI Capabilities</h4>
                     <ul>
-                        <li>**Frontend:** Streamlit (Interactive Visualization)</li>
-                        <li>**Backend:** FastAPI (High-performance API)</li>
-                        <li>**Database:** PostgreSQL (Data Persistence)</li>
-                        <li>**Containers:** Docker Compose</li>
+                        <li><strong>RAG Chatbot:</strong> Integrating vector databases (Pinecone/Chroma) to chat with financial reports.</li>
+                        <li><strong>LLM Agents:</strong> Autonomous financial research agents.</li>
                     </ul>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="skills" class="section container">
-        <h2>My Technology Stack</h2>
+    <section id="tech-stack" class="section container">
+        <h2>Technology Stack</h2>
         <div class="grid">
             <div class="card">
-                <h3>AI / Data</h3>
-                <p>Python, Pandas, NumPy, Model Deployment, FastAPI, Streamlit.</p>
+                <h3>AI & Data</h3>
+                <p>Python, PyTorch, Transformers, Pandas, NumPy.</p>
             </div>
             <div class="card">
-                <h3>Cloud / DevOps</h3>
-                <p>**Cloudflare Tunnel**, **AWS EC2**, Docker, Docker Compose, Nginx, CI/CD, Linux.</p>
+                <h3>DevOps</h3>
+                <p>Kubernetes (K3s), Docker, AWS EC2, Cloudflare Tunnel, Nginx, GitHub Actions.</p>
+            </div>
+            <div class="card">
+                <h3>Backend/Web</h3>
+                <p>FastAPI, Streamlit, PostgreSQL, SQLAlchemy.</p>
             </div>
         </div>
     </section>
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Alex | Built on a Zero-Trust Architecture | <a href="https://alex-builds.com">alex-builds.com</a></p>
+            <p>&copy; 2025 Alex | <a href="https://github.com/yourusername">GitHub</a> | <a href="https://linkedin.com/in/yourname">LinkedIn</a></p>
         </div>
     </footer>
 </body>
