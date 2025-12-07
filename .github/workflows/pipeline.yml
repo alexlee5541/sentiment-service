@@ -2,106 +2,49 @@ name: Production Pipeline
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
-  # JOB 1: SECURITY & QUALITY CHECKS
-  security-check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      
-      - name: Run Trivy Vulnerability Scanner (fs mode)
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          hide-progress: false
-          format: 'table'
-          exit-code: '0' # Don't fail build yet, just report
-          ignore-unfixed: true
-          severity: 'CRITICAL,HIGH'
-
-  # JOB 2: DEPLOY STATIC PORTFOLIO (Nginx)
   deploy-portfolio:
-    needs: security-check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: 1. Get the latest code
         uses: actions/checkout@v4
 
-      - name: Deploy Files to Staging
+      - name: 2. Deploy Portfolio Files (SCP)
         uses: appleboy/scp-action@v0.1.7
         with:
+          # These secrets must match your NEW Jakarta Server
           host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
+          username: ${{ secrets.REMOTE_USER }} # Usually 'ubuntu'
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+          # Copy the local 'portfolio' folder to a temp folder on server
           source: "./portfolio/"
           target: "~/portfolio_staging/"
-          args: "-r"
+          args: "-r" # Recursive copy
 
-      - name: Move & Reload Nginx
+      - name: 3. Move Files & Reload Nginx (SSH)
         uses: appleboy/ssh-action@v1.0.1
         with:
           host: ${{ secrets.REMOTE_HOST }}
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Clean the final destination
             sudo rm -rf /var/www/portfolio/*
+            
+            # Move files from temp staging to Nginx folder
+            # Note: scp creates the directory structure, so we look inside
             sudo mv ~/portfolio_staging/portfolio/* /var/www/portfolio/
-            rm -rf ~/portfolio_staging/
+            
+            # Remove temp folder
+            rm -rf ~/portfolio_staging
+            
+            # Fix Permissions so Nginx can read them
             sudo chown -R www-data:www-data /var/www/portfolio
+            
+            # Refresh Nginx
             sudo systemctl reload nginx
-
-  # JOB 3: BUILD & DEPLOY APP (Kubernetes)
-  # Only runs if backend/frontend files change
-  deploy-app:
-    needs: security-check
-    runs-on: ubuntu-latest
-    if: contains(github.event.head_commit.modified, 'backend/') || contains(github.event.head_commit.modified, 'frontend/')
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      # Build Backend (Only if backend changed? For simplicity we build both)
-      - name: Build and Push Backend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./backend
-          push: true
-          tags: alexlee5541/sentiment-backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64 # Critical for AWS EC2
-
-      - name: Build and Push Frontend
-        uses: docker/build-push-action@v4
-        with:
-          context: ./frontend
-          push: true
-          tags: alexlee5541/sentiment-frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
-
-      - name: Trigger K3s Rollout
-        uses: appleboy/ssh-action@v1.0.1
-        with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            # Force K3s to pull the 'latest' tag by restarting deployments
-            sudo kubectl rollout restart deployment backend-deployment
-            sudo kubectl rollout restart deployment frontend-deployment
-            echo "🚀 K3s Rolling Update Triggered!"
+            echo "✅ Portfolio Deployed and Nginx Reloaded"
